@@ -24,8 +24,8 @@ literal keyword matching for "groundedness." That catches gross regressions
 and nothing subtle. A reply can contain every expected keyword and still be
 evasive, padded, or quietly making things up.
 
-So I added an LLM-as-judge: a small model (Llama 3.1 8B, deliberately *not*
-the 70B that writes the replies — reusing the reply model would roughly
+So I added an LLM-as-judge: a small model (Llama 3.1 8B class, deliberately
+*not* the 70B that writes the replies — reusing the reply model would roughly
 double the cost of every eval run and invite the model to grade its own
 homework) reads the question, the retrieved context, and the reply, and
 scores relevance and groundedness 1–5. It runs nightly against a fixed case
@@ -98,12 +98,22 @@ That naive query produces garbage. What it took to get a clean dataset:
   judge.
 - **Duplicates.** The nightly suite re-asks the same ~12 questions every
   night, and each high-scoring reply landed as a separate row. One export had
-  31 near-duplicate rows collapse to distinct questions. Filter: dedup by
-  instruction, keeping the highest-scoring reply.
+  31 near-duplicate rows collapse to a handful of distinct questions. Filter:
+  dedup by instruction, keeping the highest-scoring reply.
+
+Even after all four filters, the surviving rows skewed ~90% "confident
+first-person assertion with specifics" — the export selects on the judge's
+relevance score, and a direct, detailed answer scores higher than a correct
+hedge. So the export also appends ~18 hand-written pairs pointing the other
+way: thin-context questions (salary, "write me a script", work not in the
+corpus) paired with a graceful "I don't have that." Hand-authored, so they
+bypass the row filters. It teaches the model *when not to assert* — and, as
+the runs below show, it wasn't enough at this data scale.
 
 Two weeks of organic traffic plus a deliberate question-asking exercise grew
-the clean, deduplicated set from 14 examples to 65, across ~80 distinct
-grounded questions.
+the judge-approved pool to **65 clean, deduplicated examples** (from a first
+export of 14), drawn from **~80 distinct questions asked**. With the ~18
+hand-authored deflection pairs, the training set was **~83 examples**.
 
 ## The fine-tuning runs
 
@@ -138,7 +148,8 @@ base          4.57      5.00
 tuned         4.43      4.71   ← regressed on both axes
 ```
 
-FAIL, on the notebook's own gate.
+FAIL, on the fine-tuning notebook's own A/B gate (tuned must beat base on
+both axes) — a separate check from the production CI floor.
 
 ## The diagnosis: the training signal was the problem
 
@@ -190,7 +201,7 @@ production. Right now it doesn't.
 1. **An eval you never stress-test will tell you everything is fine.** Mine
    returned 5/5 for two weeks. Hard cases and per-question rubrics are what
    made it useful.
-2. **The training data is the model.** Four runs, two base models, every
+2. **The training data is the model.** Three runs, two base models, every
    hyperparameter I tried — none of it mattered, because the signal itself
    taught the wrong behavior.
 3. **LLM judges are biased toward confident, verbose answers.** A fabricated
