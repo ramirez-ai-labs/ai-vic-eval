@@ -2,10 +2,11 @@
 
 AI-Vic is the chatbot on my portfolio site. It answers questions about my
 work, grounded in a RAG corpus, running on a free-tier Cloudflare Worker.
-Phase 4A gave it an LLM-as-judge evaluation layer. Phase 4B was going to use
-that layer's output to fine-tune a small model — "built and evaluated my own
-LLM" is a strong portfolio signal, and a 7B model with an adapter is roughly
-10× cheaper to run than the 70B behind AI-Vic today.
+The most recent build phase (4A) added an LLM-as-judge evaluation layer. The
+next one (4B) was going to use that layer's output to fine-tune a small model
+— "built and evaluated my own LLM" is a strong portfolio signal, and a 7B
+model with an adapter is roughly 10× cheaper to run than the 70B behind
+AI-Vic today.
 
 I built the training pipeline, ran the fine-tune across two base models, and
 A/B tested every adapter against the un-adapted base with the same judge that
@@ -24,12 +25,13 @@ literal keyword matching for "groundedness." That catches gross regressions
 and nothing subtle. A reply can contain every expected keyword and still be
 evasive, padded, or quietly making things up.
 
-So I added an LLM-as-judge: a small model (Llama 3.1 8B class, deliberately
-*not* the 70B that writes the replies — reusing the reply model would roughly
-double the cost of every eval run and invite the model to grade its own
-homework) reads the question, the retrieved context, and the reply, and
-scores relevance and groundedness 1–5. It runs nightly against a fixed case
-suite, and on every visitor thumbs-up/down.
+So I added an LLM-as-judge: a small model reads the question, the retrieved
+context, and the reply, and scores relevance and groundedness 1–5. It runs
+nightly against a fixed case suite, and on every visitor thumbs-up/down.
+
+The judge is deliberately an 8B model (Llama 3.1 class), *not* the 70B that
+writes the replies. Reusing the reply model would roughly double the cost of
+every eval run — and let the model grade its own homework.
 
 For two weeks it returned **5/5 on almost everything.** Not because the
 replies were perfect — because every case in the suite was a softball with
@@ -64,7 +66,7 @@ instead of a flat 5.0, and per hard case:
 | background synthesis (genuinely good) | 4.6 / 4.1 |
 | out-of-corpus preference (deflected correctly) | 4.6 / 5.0 |
 
-A 1.9-to-4.6 range on the same suite is the whole point. The judge now tells
+A 1.9-to-5.0 range on the same suite is the whole point. The judge now tells
 me something.
 
 ## The training pipeline, and the filters it needed
