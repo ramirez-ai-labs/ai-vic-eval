@@ -41,11 +41,11 @@ anything hard.
 Two changes turned it from a formality into a measurement.
 
 **Hard cases.** I added out-of-corpus questions where a fluent, confident
-answer is the *wrong* answer: "What's Victor's favorite programming
-language?" (the corpus states none — naming one is a groundedness failure),
-"What exact date did he start at Moody's?" (the corpus gives a year, not a
-day), "What are his biggest professional failures?" (not something the corpus
-covers — the right move is a graceful redirect, not an invented list).
+answer is the *wrong* answer: "What's my favorite programming language?" (the
+corpus states none — naming one is a groundedness failure), "What exact date
+did I start my current job?" (the corpus gives a year, not a day), "What are
+my biggest professional failures?" (not something the corpus covers — the
+right move is a graceful redirect, not an invented list).
 
 **Per-question rubrics.** Each hard case carries an `expectedBehavior` string
 describing what a strong reply does. That gets appended to the judge prompt,
@@ -61,7 +61,7 @@ instead of a flat 5.0, and per hard case:
 | exact start date (fabricated a precise date) | 1.9 / 2.7 |
 | biggest failures (didn't deflect) | 1.9 / 5.0 |
 | transformer attention vs. RNN hidden state (shallow) | 3 / 1 |
-| DevOps→AI synthesis (genuinely good) | 4.6 / 4.1 |
+| background synthesis (genuinely good) | 4.6 / 4.1 |
 | out-of-corpus preference (deflected correctly) | 4.6 / 5.0 |
 
 A 1.9-to-4.6 range on the same suite is the whole point. The judge now tells
@@ -114,22 +114,20 @@ design bet: don't fine-tune *knowledge* into the model, fine-tune *voice and
 structure*, and let RAG stay the source of truth for facts.
 
 **Run 1 — Llama-2-7b-chat, rank 16.** The adapter fabricated with confidence:
-claimed it "developed Claude Haiku" (Anthropic's model), described TrustClaw —
-a personal demo project — as a system built "for a large financial
-institution."
+it claimed credit for building a well-known commercial model, and reframed a
+small personal demo as an enterprise system built for a client that doesn't
+exist.
 
 **Run 2 — Llama-2-7b-chat, rank 8.** Lower rank, fewer epochs, cleaner data.
-Still fabricating — a React/Node/MongoDB stack for TrustClaw (it's Claude
-Haiku on Vercel), four invented failure stories, a "company-wide cloud
-migration" that never happened.
+Still fabricating — an invented tech stack for a real project, several
+invented failure stories, a "company-wide migration" that never happened.
 
 **Run 3 — Qwen2.5-7B-Instruct, rank 8.** Switched to a 2024 base that follows
-retrieved context far better than 2023-era Llama-2. TrustClaw came out
-*accurate* — forked repo, Gmail webhook, Claude Haiku, Composio, Vercel,
-JFrog, 28 deployments. But on questions the corpus doesn't cover, the adapter
-still invented: "previous roles at companies like Goldman Sachs and IBM
-Research" (17 years at Moody's, nowhere else), "a real-time data streaming
-system using MongoDB Atlas, millions of events per second."
+retrieved context far better than 2023-era Llama-2. The real projects in the
+corpus came out *accurate* — matching repos, integrations, deployment counts.
+But on questions the corpus doesn't cover, the adapter still invented: prior
+employers I've never worked for, and a large-scale real-time data system that
+doesn't exist.
 
 The judge on that run — the same judge, running pairwise base-vs-tuned on
 held-out questions:
@@ -145,10 +143,10 @@ FAIL, on the notebook's own gate.
 ## The diagnosis: the training signal was the problem
 
 The base model (Qwen + my system prompt + retrieval) was consistently *more
-honest* than the adapter. When asked about MongoDB, the base said "not
-explicitly mentioned in the portfolio, but I can discuss it generally." The
-adapter said "I've used MongoDB Atlas extensively… millions of events per
-second." Same context, and the adapter ignored it.
+honest* than the adapter. Asked about a technology the corpus doesn't
+mention, the base said "not explicitly mentioned in the portfolio, but I can
+discuss it generally." The adapter claimed extensive hands-on production use
+with specific throughput numbers. Same context, and the adapter ignored it.
 
 The training data was ~90% "confident first-person assertion with specifics" —
 because the export filter selects on the judge's *relevance* score, and a

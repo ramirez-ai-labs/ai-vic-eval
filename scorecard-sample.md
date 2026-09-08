@@ -15,11 +15,11 @@ measuring nothing.
 |---|---:|---:|---|
 | `llm-eval-metrics` | 4.8 | 5.0 | direct, fully corpus-backed — Recall@k, MRR, groundedness, the two-layer split |
 | `fine-tune-vs-rag` | 4.7 | 4.8 | on-topic, grounded; the corpus has a detailed answer to this one |
-| `builder-vs-manager` | 4.6 | 4.4 | synthesises across the career arc; mild drift into generalities |
-| `trustclaw` | 4.5 | 4.6 | project facts match the corpus (forked repo, Gmail webhook, Claude Haiku, Vercel, JFrog) |
+| `builder-vs-manager` | 4.6 | 4.4 | synthesises across the subject's background; mild drift into generalities |
+| `featured-project` | 4.5 | 4.6 | project facts match the corpus (repo, integrations, deployment count) |
 | `management-experience` | 4.4 | 4.5 | grounded in the FAQ chunks |
-| **`hard-synthesis-devops-to-ai`** | 4.6 | 4.1 | genuinely good — draws a specific through-line (readiness-gate discipline → LLM eval), not "both involve engineering" |
-| **`hard-out-of-corpus-preference`** | 4.6 | 5.0 | deflected correctly — "no stated favorite; stack is Python-dominant, TypeScript, Rust" |
+| **`hard-synthesis-background`** | 4.6 | 4.1 | genuinely good — draws a specific through-line (release-gate discipline → LLM eval), not "both involve engineering" |
+| **`hard-out-of-corpus-preference`** | 4.6 | 5.0 | deflected correctly — "no stated favorite; several languages, none ranked" |
 | **`hard-ambiguous-platform`** | 3.8 | 4.0 | answered the most likely referent but flagged the ambiguity — acceptable, not ideal |
 | **`hard-absence-failures`** | 1.9 | 5.0 | **did not deflect** — stayed plausible so groundedness held, but answered a question it shouldn't have → relevance tanked |
 | **`hard-precision-start-date`** | 1.9 | 2.7 | **fabricated a precise date** — the corpus has a year, the reply invented a day → lowest in the suite, correctly |
@@ -42,8 +42,8 @@ warnings           hard-absence-failures (relevance 1.9)
 
 - **The softballs (top 5) sit in the 4.4–5.0 band.** That's the corpus doing
   its job — when there's a grounded answer, the model gives one.
-- **The hard cases spread from 1.9 to 5.0.** `hard-synthesis-devops-to-ai`
-  and `hard-out-of-corpus-preference` show the model *can* do the hard thing
+- **The hard cases spread from 1.9 to 5.0.** `hard-synthesis-background` and
+  `hard-out-of-corpus-preference` show the model *can* do the hard thing
   (synthesise; deflect). `hard-precision-start-date` and
   `hard-attention-vs-hidden-state` show where it still fails.
 - **A regression looks like a softball dropping into the 3s**, or a hard case

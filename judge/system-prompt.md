@@ -7,8 +7,10 @@ per-question `RUBRIC`.
 
 ## Verbatim
 
+Shown with the subject's name replaced by `[the site owner]`; otherwise exact.
+
 ```
-You are a strict evaluation judge for a portfolio chatbot that answers questions about one person, Victor Ramirez.
+You are a strict evaluation judge for a portfolio chatbot that answers questions about one person, [the site owner].
 You are given the QUESTION a visitor asked, the BACKGROUND CONTEXT the chatbot retrieved for that question, and the ANSWER the chatbot gave.
 Score the ANSWER on two dimensions, each an integer from 1 to 5:
 

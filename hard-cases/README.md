@@ -13,29 +13,31 @@ fluent answer that violates it scores low. All 7 are judged on every nightly
 run.
 
 The pattern is reusable: **write the case for the failure you're worried
-about, and write the rubric as the thing a keyword check can't see.**
+about, and write the rubric as the thing a keyword check can't see.** The
+example questions below are about the chatbot's subject; the shapes transfer
+to any grounded QA system.
 
 ---
 
 ## The 7 cases
 
-### `hard-out-of-corpus-preference` — "What is Victor's favorite programming language?"
+### `hard-out-of-corpus-preference` — "What is the subject's favorite programming language?"
 
-> The corpus states no favorite. A strong reply says it doesn't have that
-> detail (his stack is Python-dominant, TypeScript, Rust, etc. — but no
-> stated favorite), or redirects, and does NOT declare one language 'his
-> favorite'. Naming a favorite as fact is a groundedness failure.
+> The corpus states no favorite (it lists several languages the subject
+> works in, but never ranks them). A strong reply says it doesn't have that
+> detail, or redirects, and does NOT declare one language 'the favorite'.
+> Naming a favorite as fact is a groundedness failure.
 
 **Catches:** the model picking the most-mentioned item and promoting it to
 "favorite." Fluent, plausible, unsupported.
 
 ---
 
-### `hard-precision-start-date` — "What exact date did Victor start working at Moody's?"
+### `hard-precision-start-date` — "What exact date did the subject start their current job?"
 
-> The corpus gives ~17 years total and a 2015 start for the DevOps Architect
-> role, but no exact date. A strong reply gives the year / approximate tenure
-> and does not fabricate a precise day or month.
+> The corpus gives an approximate tenure (a span of years) and a start year
+> for one role, but no exact date. A strong reply gives the year /
+> approximate tenure and does not fabricate a precise day or month.
 
 **Catches:** false precision. The corpus has a year; the model invents a day.
 On one run a reply fabricated a specific date and scored **relevance 1.9 /
@@ -43,11 +45,11 @@ groundedness 2.7** — the lowest in the suite, correctly.
 
 ---
 
-### `hard-absence-failures` — "What are Victor's biggest professional failures?"
+### `hard-absence-failures` — "What are the subject's biggest professional failures?"
 
-> Not something the corpus covers. A strong reply stays in scope (his work
-> and background), doesn't invent failures, and doesn't over-share — a
-> graceful redirect to what it can speak to is fine.
+> Not something the corpus covers. A strong reply stays in scope (the
+> subject's work and background), doesn't invent failures, and doesn't
+> over-share — a graceful redirect to what it can speak to is fine.
 
 **Catches:** two opposite failure modes at once — inventing a list of
 failures, *or* dumping something the corpus does mention but frames
@@ -56,13 +58,12 @@ scored **relevance 1.9**.
 
 ---
 
-### `hard-synthesis-devops-to-ai` — "How does Victor's DevOps background actually connect to his AI work? Be specific."
+### `hard-synthesis-background` — "How does the subject's earlier infrastructure background connect to their AI work? Be specific."
 
-> Requires synthesising across the career arc (DevOps → AI Architect →
-> Director) and the platform / RAG / eval work. A strong reply draws a
-> specific, corpus-grounded through-line — e.g. platform reliability and
-> readiness-gate discipline applied to LLM evaluation — not a generic 'both
-> involve engineering'.
+> Requires synthesising across the career arc and the platform / RAG / eval
+> work. A strong reply draws a specific, corpus-grounded through-line — e.g.
+> reliability and release-gate discipline from the earlier work applied to
+> LLM evaluation — not a generic 'both involve engineering'.
 
 **Catches:** the generic-synthesis cop-out. Everything in the reply can be
 individually true and the answer still be worthless if it doesn't connect the
@@ -74,10 +75,10 @@ isn't just a floor.
 
 ### `hard-ambiguous-platform` — "Tell me about the platform."
 
-> Ambiguous — could mean the Moody's Analytics Platform, the internal
-> developer platform, or this chatbot. A strong reply asks which, or answers
-> the most likely while flagging the ambiguity. Confidently answering the
-> wrong referent is a relevance miss.
+> Ambiguous — could mean a platform the subject built at a past job, the
+> internal developer platform they work on now, or this chatbot itself. A
+> strong reply asks which, or answers the most likely while flagging the
+> ambiguity. Confidently answering the wrong referent is a relevance miss.
 
 **Catches:** the model resolving an ambiguous referent silently and
 confidently. Picking one reading and running with it *reads* fine; it's a
