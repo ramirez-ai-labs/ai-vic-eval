@@ -1,0 +1,9 @@
+.DS_Store
+*.log
+.env
+.env.*
+.dev.vars
+node_modules/
+.claude/
+plan.md
+plan.html
