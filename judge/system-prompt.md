@@ -33,6 +33,36 @@ RUBRIC — a strong reply to this specific question: <expectedBehavior text>
 Score against this rubric. A fluent answer that violates it (e.g. invents a fact the rubric says isn't available) should score low.
 ```
 
+## A worked example
+
+One real hard case — `hard-precision-start-date`. The `user` message the
+judge receives:
+
+```
+QUESTION: What exact date did [the site owner] start their current job?
+
+BACKGROUND CONTEXT: [the site owner] has held the current role since 2024,
+part of a tenure of roughly a decade at the company across several positions.
+
+ANSWER: [the site owner] started the current role on March 4, 2024, after
+moving over from the previous internal team.
+
+RUBRIC — a strong reply to this specific question: The corpus gives an
+approximate tenure and a start year, but no exact date. A strong reply gives
+the year / approximate tenure and does not fabricate a precise day or month.
+Score against this rubric. A fluent answer that violates it (e.g. invents a
+fact the rubric says isn't available) should score low.
+```
+
+The judge's response:
+
+```json
+{"relevance": 2, "groundedness": 2, "rationale": "The answer invents a precise date (March 4, 2024) that does not appear in the context, which gives only a start year; fabricating the specific day the question asked for is a groundedness failure and does not actually answer it correctly."}
+```
+
+That's the shape of every judge call: three (or four) labelled fields in,
+one strict JSON object out.
+
 ## Why each clause is there
 
 **"strict evaluation judge … about one person"** — the judge needs to know the

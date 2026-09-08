@@ -92,9 +92,9 @@ Hand-authored, so they bypass the row filters above. This teaches the model
 *when not to assert*.
 
 It wasn't enough. See [the write-up](../writeup.md) — at this data scale
-(~65 judged + 18 deflection ≈ 80 examples) the imbalance still won, and the
-adapter fabricated on out-of-corpus questions. But the deflection-set idea is
-sound; the problem was volume.
+(65 judged rows + ~18 deflection pairs ≈ 83 examples) the imbalance still
+won, and the adapter fabricated on out-of-corpus questions. But the
+deflection-set idea is sound; the problem was volume.
 
 ---
 
@@ -116,8 +116,9 @@ sound; the problem was volume.
 ```
 
 Two weeks of organic traffic plus a deliberate question-asking exercise grew
-the clean, deduplicated set from **14 examples to 65**, across ~80 distinct
-grounded questions. Per *LLM Engineering* (Packt), that's below the floor a
-7B model needs — the LIMA "1,000 samples" figure is for 70B models; a 7B
-needs more just to learn the chat template, and task-specific fine-tuning
-wants 100–100,000.
+the judge-approved pool from a first export of **14 rows to 65** clean,
+deduplicated examples, drawn from **~80 distinct questions asked**. With the
+~18 hand-authored deflection pairs, the training set was **~83 examples**.
+Per *LLM Engineering* (Packt), that's below the floor a 7B model needs — the
+LIMA "1,000 samples" figure is for 70B models; a 7B needs more just to learn
+the chat template, and task-specific fine-tuning wants 100–100,000.
