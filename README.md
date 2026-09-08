@@ -44,7 +44,7 @@ flowchart TD
     R --> U["Visitor sees the reply"]
     U -->|"thumbs up / down"| F["Human rating"]
 
-    subgraph EVAL ["The eval layer (this repo)"]
+    subgraph EVAL["The eval layer (this repo)"]
       N["Nightly: fixed case suite<br/>5 softballs + 7 hard cases"] --> J
       F --> J["8B judge scores relevance<br/>and groundedness 1-5<br/>(hard cases add a rubric)"]
       J --> S[("eval_scores<br/>append-only time series")]
@@ -56,6 +56,7 @@ flowchart TD
 
     S --> X["Phase 4B export:<br/>rows the judge scored high,<br/>with retrieved context"]
     X --> FT["4 filters + hand-authored<br/>deflection set"]
+    F -.->|"a thumbs-down<br/>vetoes the row"| FT
     FT --> TR["training set (~83 examples)"]
     TR --> LORA["LoRA fine-tune<br/>(2 base models, 3 runs)"]
     LORA --> AB["pairwise A/B vs un-adapted base,<br/>same judge"]
@@ -76,6 +77,11 @@ eval layer**.
 | [`training-export/filters.md`](training-export/filters.md) | The four filters that turn judge-approved rows into a clean fine-tuning set, and why a naive "score ≥ 4" query produces garbage |
 | [`scorecard-sample.md`](scorecard-sample.md) | A representative nightly scorecard — the 1.9-to-5.0 spread that means the judge is measuring something |
 | [`writeup.md`](writeup.md) | **"I fine-tuned a model for my portfolio chatbot. My own eval told me not to ship it."** The full negative-result narrative |
+
+**New here?** Read [`writeup.md`](writeup.md) first — it's the whole story
+start to finish. Then [`judge/system-prompt.md`](judge/system-prompt.md) and
+[`hard-cases/README.md`](hard-cases/README.md) for how the judge actually
+works, and [`scorecard-sample.md`](scorecard-sample.md) to see it scoring.
 
 ## The one-paragraph version of the write-up
 

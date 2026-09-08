@@ -17,6 +17,10 @@ about, and write the rubric as the thing a keyword check can't see.** The
 example questions below are about the chatbot's subject; the shapes transfer
 to any grounded QA system.
 
+Each case below ends with its score from
+[`scorecard-sample.md`](../scorecard-sample.md) — a representative run —
+written `relevance / groundedness`, both out of 5.
+
 ---
 
 ## The 7 cases
@@ -31,6 +35,9 @@ to any grounded QA system.
 **Catches:** the model picking the most-mentioned item and promoting it to
 "favorite." Fluent, plausible, unsupported.
 
+**Sample scorecard: 4.6 / 5.0** — deflected correctly ("no stated favorite;
+several languages, none ranked").
+
 ---
 
 ### `hard-precision-start-date` — "What exact date did the subject start their current job?"
@@ -40,8 +47,9 @@ to any grounded QA system.
 > approximate tenure and does not fabricate a precise day or month.
 
 **Catches:** false precision. The corpus has a year; the model invents a day.
-On one run a reply fabricated a specific date and scored **relevance 1.9 /
-groundedness 2.7** — the lowest in the suite, correctly.
+
+**Sample scorecard: 1.9 / 2.7** — a reply fabricated a specific date; the
+lowest score in the suite, correctly.
 
 ---
 
@@ -53,8 +61,12 @@ groundedness 2.7** — the lowest in the suite, correctly.
 
 **Catches:** two opposite failure modes at once — inventing a list of
 failures, *or* dumping something the corpus does mention but frames
-neutrally. The right move is a scoped redirect. A reply that didn't deflect
-scored **relevance 1.9**.
+neutrally. The right move is a scoped redirect.
+
+**Sample scorecard: 1.9 / 5.0** — the reply didn't deflect. It stayed
+plausible, so groundedness held, but it answered a question it shouldn't
+have, so relevance collapsed. (Two axes earn their keep here: one number
+would average this to a passing 3.5.)
 
 ---
 
@@ -67,9 +79,11 @@ scored **relevance 1.9**.
 
 **Catches:** the generic-synthesis cop-out. Everything in the reply can be
 individually true and the answer still be worthless if it doesn't connect the
-two halves. This is the case a keyword check is *least* able to judge — and
-when the reply is genuinely good it scores **~4.6 / 4.1**, so the rubric
-isn't just a floor.
+two halves. This is the case a keyword check is *least* able to judge.
+
+**Sample scorecard: 4.6 / 4.1** — genuinely good: it drew a specific
+through-line, not "both involve engineering." The rubric isn't just a floor;
+a strong answer clears it.
 
 ---
 
@@ -83,6 +97,9 @@ isn't just a floor.
 **Catches:** the model resolving an ambiguous referent silently and
 confidently. Picking one reading and running with it *reads* fine; it's a
 relevance failure if it picked wrong.
+
+**Sample scorecard: 3.8 / 4.0** — answered the most likely referent but
+flagged the ambiguity. Acceptable, not ideal.
 
 ---
 
@@ -99,9 +116,11 @@ relevance failure if it picked wrong.
 
 **Catches:** fluent-but-shallow technical answers. Added after a live review
 found the reply generator answering confidently on ML fundamentals while
-missing the actual differentiator. A high-level "attention looks at the whole
-sequence, hidden state is a memory" scored **3 / 1** — on-topic, not wrong,
-not an answer.
+missing the actual differentiator.
+
+**Sample scorecard: 3.0 / 1.0** — a high-level "attention looks at the whole
+sequence, hidden state is a memory": on-topic, not wrong, not an answer. It
+missed parallelism and the O(n²) vs O(n) tradeoff entirely.
 
 ---
 
@@ -118,6 +137,9 @@ not an answer.
 **Catches:** the token≈word error, *and* the model reaching for a fabricated
 project metric to illustrate the cost point. Two different failure modes in
 one question.
+
+**Sample scorecard: 3.2 / 2.0** — defined token ≈ word (a factual error) and
+reached for an unverified cost metric.
 
 ---
 
