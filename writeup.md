@@ -212,3 +212,37 @@ production. Right now it doesn't.
 4. **The strongest outcome of a fine-tuning project can be not shipping the
    fine-tune** — if you have the evaluation to know why. Reliability by
    default; impressiveness by choice.
+
+## Postscript: the eval caught the fix over-correcting
+
+*Added after publication.*
+
+The judge-prompt mitigation above (punish invented specifics; treat an honest
+"I don't have that detail here" as well-grounded) was fine on its own. The
+regression came a few days later from a *separate* change: a system-prompt
+rule that handed the reply model an explicit line to say — "I don't have
+anything on that in my portfolio" — when a question had no corpus coverage.
+Written to stop fabrication, it over-corrected. It started firing on
+questions the corpus *did* cover: a visitor asking how I approach model
+monitoring, model lifecycle, or explainability got a flat refusal, even
+though there's real grounded material on all three.
+
+The nightly caught it. Mean relevance dropped to ~3.2 against the 3.5
+blocking floor and the run went red — the tell was the *softballs* falling
+into the 3s, questions with a full grounded answer that the model was now
+deflecting. That landed a day or two before the same behaviour got reported
+by hand.
+
+The fix was a sharper rule — deflect a *specific named* technology or company
+with zero grounding; synthesise from adjacent context and stated principles
+for a general "how do you approach X" question — plus four new `hard-*`
+cases: one that fails a reply for inventing, three that fail a reply for
+refusing. Invent nothing, but don't refuse to think.
+
+Worth a postscript because it's the same result as the original story, a
+couple of weeks on. An eval you built yourself will still have blind spots —
+a fix for one failure mode is a fresh chance to introduce another — and the
+thing that catches it is a fixed suite running on a schedule with a floor
+that fails the build. One gap the incident exposed: a red nightly wasn't
+wired to notify anyone, so it sat until the manual report. That's the top of
+the list now.

@@ -36,6 +36,13 @@ For two weeks it returned **5/5 on almost everything** — not because the
 replies were perfect, but because every case in the suite was a softball with
 solid corpus backing. Fixing that is most of what this repo documents.
 
+It has since earned its keep a second time. A system-prompt rule written to
+stop the model fabricating on out-of-corpus questions over-corrected into
+refusing questions it had grounded answers for. The nightly went **red on the
+regression** — mean relevance ~3.2 against a 3.5 floor — before anyone
+reported it, and the fix added the matched guard cases described in
+[`hard-cases/`](hard-cases/README.md).
+
 ## How the pieces fit together
 
 ```mermaid
@@ -45,7 +52,7 @@ flowchart TD
     U -->|"thumbs up / down"| F["Human rating"]
 
     subgraph EVAL["The eval layer (this repo)"]
-      N["Nightly: fixed case suite<br/>5 softballs + 7 hard cases"] --> J
+      N["Nightly: fixed case suite<br/>5 softballs + 11 hard cases"] --> J
       F --> J["8B judge scores relevance<br/>and groundedness 1-5<br/>(hard cases add a rubric)"]
       J --> S[("eval_scores<br/>append-only time series")]
       J -.->|"cache hit skips the call"| C[("judge_cache")]
@@ -73,7 +80,7 @@ eval layer**.
 |---|---|
 | [`judge/system-prompt.md`](judge/system-prompt.md) | The judge's system prompt, verbatim, with the rationale for every clause |
 | [`judge/scoring.md`](judge/scoring.md) | The two dimensions, the small-model choice, the exact-match score cache (and why it's keyed on `(query, reply)`), the append-only time series vs. the cache, and the CI blocking floor |
-| [`hard-cases/README.md`](hard-cases/README.md) | The 7 `hard-*` cases — questions with no clean corpus answer, or a subtle failure mode, where a fluent confident answer is the *wrong* answer — each with its per-question rubric and the failure it caught |
+| [`hard-cases/README.md`](hard-cases/README.md) | The 11 `hard-*` cases — questions with no clean corpus answer, or a subtle failure mode, where a fluent confident answer is the *wrong* answer — each with its per-question rubric and the failure it caught. Cases 8–11 are a matched pair added after a fix for one failure mode (fabrication) created another (over-cautious deflection) — the nightly caught the over-correction on its own |
 | [`training-export/filters.md`](training-export/filters.md) | The four filters that turn judge-approved rows into a clean fine-tuning set, and why a naive "score ≥ 4" query produces garbage |
 | [`scorecard-sample.md`](scorecard-sample.md) | A representative nightly scorecard — the 1.9-to-5.0 spread that means the judge is measuring something |
 | [`writeup.md`](writeup.md) | **"I fine-tuned a model for my portfolio chatbot. My own eval told me not to ship it."** The full negative-result narrative |

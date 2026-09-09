@@ -15,9 +15,9 @@ usage shows up on the same dashboard and isn't a blind spot.
 
 ## The two triggers
 
-1. **Nightly** — a fixed subset of the regression suite (currently 12 of 26
-   cases: 5 retrieval softballs + all 7 `hard-*` cases) is judged on a
-   schedule. ~12 small model calls a night.
+1. **Nightly** — a fixed subset of the regression suite (currently 16 of 31
+   cases: 5 retrieval softballs + all 11 `hard-*` cases) is judged on a
+   schedule. ~16 small model calls a night.
 2. **Live feedback** — every time a visitor rates a reply 👍/👎, that
    `(query, reply)` is judged in the background and the score is stored next
    to the human rating. This builds a labelled set: *does the machine agree
@@ -51,7 +51,7 @@ Where the cache actually helps:
   nightly and a visitor 👍 landing on an identical reply — is a hit.
 - **The nightly: no.** The 70B reply model runs at temperature 0.5, so the
   reply text (and the cache key) changes run to run. Observed nightly hit
-  rate: **0%**. That's fine — ~12 tiny 8B calls a night is negligible — but
+  rate: **0%**. That's fine — ~16 tiny 8B calls a night is negligible — but
   the cache was designed assuming a reply stability that doesn't hold, and
   it's worth being honest that it earns its keep on feedback, not on the
   schedule.
@@ -82,3 +82,12 @@ The judge means gate CI: a run **fails** below a blocking minimum (3.5) and
 **warns** below an advisory minimum (3.0). The floor was wired only once the
 hard-case spread proved stable over several nightly runs — set conservatively
 to avoid noisy failures while the signal-to-noise was still improving.
+
+The floor has fired on a real regression since. A system-prompt change meant
+to curb fabrication made the reply model over-deflect — it started refusing
+in-scope questions — and the nightly mean dropped to ~3.2, failing the run.
+The failure landed a day or two before the same behaviour got reported by
+hand, which is the point of running it nightly. The gap the incident exposed:
+a red nightly is not wired to notify anyone, so it sat unactioned until the
+manual report. Fixing that (a page or an issue on a failed run) is the
+obvious next step.
