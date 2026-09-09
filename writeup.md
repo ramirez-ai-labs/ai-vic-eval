@@ -2,10 +2,11 @@
 
 AI-Vic is the chatbot on my portfolio site. It answers questions about my
 work, grounded in a RAG corpus, running on a free-tier Cloudflare Worker.
-Phase 4A gave it an LLM-as-judge evaluation layer. Phase 4B was going to use
-that layer's output to fine-tune a small model — "built and evaluated my own
-LLM" is a strong portfolio signal, and a 7B model with an adapter is roughly
-10× cheaper to run than the 70B behind AI-Vic today.
+The most recent build phase (4A) added an LLM-as-judge evaluation layer. The
+next one (4B) was going to use that layer's output to fine-tune a small model
+— "built and evaluated my own LLM" is a strong portfolio signal, and a 7B
+model with an adapter is roughly 10× cheaper to run than the 70B behind
+AI-Vic today.
 
 I built the training pipeline, ran the fine-tune across two base models, and
 A/B tested every adapter against the un-adapted base with the same judge that
@@ -24,12 +25,13 @@ literal keyword matching for "groundedness." That catches gross regressions
 and nothing subtle. A reply can contain every expected keyword and still be
 evasive, padded, or quietly making things up.
 
-So I added an LLM-as-judge: a small model (Llama 3.1 8B class, deliberately
-*not* the 70B that writes the replies — reusing the reply model would roughly
-double the cost of every eval run and invite the model to grade its own
-homework) reads the question, the retrieved context, and the reply, and
-scores relevance and groundedness 1–5. It runs nightly against a fixed case
-suite, and on every visitor thumbs-up/down.
+So I added an LLM-as-judge: a small model reads the question, the retrieved
+context, and the reply, and scores relevance and groundedness 1–5. It runs
+nightly against a fixed case suite, and on every visitor thumbs-up/down.
+
+The judge is deliberately an 8B model (Llama 3.1 class), *not* the 70B that
+writes the replies. Reusing the reply model would roughly double the cost of
+every eval run — and let the model grade its own homework.
 
 For two weeks it returned **5/5 on almost everything.** Not because the
 replies were perfect — because every case in the suite was a softball with
@@ -64,7 +66,7 @@ instead of a flat 5.0, and per hard case:
 | background synthesis (genuinely good) | 4.6 / 4.1 |
 | out-of-corpus preference (deflected correctly) | 4.6 / 5.0 |
 
-A 1.9-to-4.6 range on the same suite is the whole point. The judge now tells
+A 1.9-to-5.0 range on the same suite is the whole point. The judge now tells
 me something.
 
 ## The training pipeline, and the filters it needed
@@ -210,3 +212,37 @@ production. Right now it doesn't.
 4. **The strongest outcome of a fine-tuning project can be not shipping the
    fine-tune** — if you have the evaluation to know why. Reliability by
    default; impressiveness by choice.
+
+## Postscript: the eval caught the fix over-correcting
+
+*Added after publication.*
+
+The judge-prompt mitigation above (punish invented specifics; treat an honest
+"I don't have that detail here" as well-grounded) was fine on its own. The
+regression came a few days later from a *separate* change: a system-prompt
+rule that handed the reply model an explicit line to say — "I don't have
+anything on that in my portfolio" — when a question had no corpus coverage.
+Written to stop fabrication, it over-corrected. It started firing on
+questions the corpus *did* cover: a visitor asking how I approach model
+monitoring, model lifecycle, or explainability got a flat refusal, even
+though there's real grounded material on all three.
+
+The nightly caught it. Mean relevance dropped to ~3.2 against the 3.5
+blocking floor and the run went red — the tell was the *softballs* falling
+into the 3s, questions with a full grounded answer that the model was now
+deflecting. That landed a day or two before the same behaviour got reported
+by hand.
+
+The fix was a sharper rule — deflect a *specific named* technology or company
+with zero grounding; synthesise from adjacent context and stated principles
+for a general "how do you approach X" question — plus four new `hard-*`
+cases: one that fails a reply for inventing, three that fail a reply for
+refusing. Invent nothing, but don't refuse to think.
+
+Worth a postscript because it's the same result as the original story, a
+couple of weeks on. An eval you built yourself will still have blind spots —
+a fix for one failure mode is a fresh chance to introduce another — and the
+thing that catches it is a fixed suite running on a schedule with a floor
+that fails the build. One gap the incident exposed: a red nightly wasn't
+wired to notify anyone, so it sat until the manual report. That's the top of
+the list now.
