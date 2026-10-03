@@ -1,16 +1,19 @@
 # ai-vic-eval
 
 The evaluation methodology behind **AI-Vic**, the chatbot on
-[ramirezailabs.com](https://ramirezailabs.com) — an LLM-as-judge layer that
-runs nightly and on every visitor thumbs-up/down, plus the negative-result
-write-up of the fine-tuning experiment it was built to feed.
+[ramirezailabs.com](https://ramirezailabs.com). It has two layers: an
+LLM-as-judge that scores every reply (nightly, and on every visitor
+thumbs-up/down), and a retrieval eval that scores whether the right context
+came back at all. It also holds two negative results: a fine-tune the eval
+said not to ship, and a reranker that made retrieval worse.
 
 This repo is the **methodology**, not the chatbot. The chatbot itself is a
 private repo (a Cloudflare Worker doing RAG + agentic tool-calling over a
 hand-written corpus about one person). What's public here is the part that
 generalises: how the judge is prompted, how the hard cases are written, how
-the training-data export is filtered, and what happened when a fine-tune was
-trained on that data.
+retrieval is scored, how the training-data export is filtered, and what
+happened when a fine-tune was trained on that data and when a reranker was
+put in front of retrieval.
 
 **Assumed background:** you know roughly what RAG and fine-tuning are. If the
 retrieval-metrics basics (Recall@k, MRR) are new, start with
@@ -52,14 +55,18 @@ flowchart TD
     U -->|"thumbs up / down"| F["Human rating"]
 
     subgraph EVAL["The eval layer (this repo)"]
-      N["Nightly: fixed case suite<br/>5 softballs + 11 hard cases"] --> J
+      N["Nightly: fixed case suite<br/>5 softballs + 13 hard cases"] --> J
       F --> J["8B judge scores relevance<br/>and groundedness 1-5<br/>(hard cases add a rubric)"]
       J --> S[("eval_scores<br/>append-only time series")]
       J -.->|"cache hit skips the call"| C[("judge_cache")]
       S --> G{"run means under<br/>the blocking floor?"}
       G -->|"yes"| FAIL["CI fails"]
       G -->|"no"| PASS["CI passes"]
+      N --> RE["Retrieval eval: precision@k,<br/>MRR, context recall<br/>(advisory)"]
+      RE --> RS[("retrieval_scores<br/>time series")]
     end
+
+    RS -.->|"measured the change"| HY["Hybrid search shipped<br/>(cosine + BM25, RRF);<br/>reranker rejected"]
 
     S --> X["Phase 4B export:<br/>rows the judge scored high,<br/>with retrieved context"]
     X --> FT["4 filters + hand-authored<br/>deflection set"]
@@ -71,8 +78,10 @@ flowchart TD
 ```
 
 The [write-up](writeup.md) is the story of the bottom branch (the export and
-everything below it). The rest of the repo documents the subgraph — **the
-eval layer**.
+everything below it). The [retrieval eval](rag-eval/README.md) is the newer
+part of the subgraph, and [hybrid-vs-reranker](rag-eval/hybrid-vs-reranker.md)
+is what it measured first. The rest of the repo documents the judge — the
+original **eval layer**.
 
 ## Contents
 
@@ -80,8 +89,11 @@ eval layer**.
 |---|---|
 | [`judge/system-prompt.md`](judge/system-prompt.md) | The judge's system prompt, verbatim, with the rationale for every clause |
 | [`judge/scoring.md`](judge/scoring.md) | The two dimensions, the small-model choice, the exact-match score cache (and why it's keyed on `(query, reply)`), the append-only time series vs. the cache, and the CI blocking floor |
-| [`hard-cases/README.md`](hard-cases/README.md) | The 11 `hard-*` cases — questions with no clean corpus answer, or a subtle failure mode, where a fluent confident answer is the *wrong* answer — each with its per-question rubric and the failure it caught. Cases 8–11 are a matched pair added after a fix for one failure mode (fabrication) created another (over-cautious deflection) — the nightly caught the over-correction on its own |
+| [`hard-cases/README.md`](hard-cases/README.md) | The 13 `hard-*` cases — questions with no clean corpus answer, or a subtle failure mode, where a fluent confident answer is the *wrong* answer — each with its per-question rubric and the failure it caught. Cases 8–11 are a matched pair added after a fix for one failure mode (fabrication) created another (over-cautious deflection) — the nightly caught the over-correction on its own. Cases 12–13 are precision traps about a named project; one caught a real misstatement |
 | [`training-export/filters.md`](training-export/filters.md) | The four filters that turn judge-approved rows into a clean fine-tuning set, and why a naive "score ≥ 4" query produces garbage |
+| [`rag-eval/README.md`](rag-eval/README.md) | The retrieval eval: context precision@k, MRR and context recall over labelled cases, the inverted out-of-corpus check, and what three weeks of nightlies showed |
+| [`rag-eval/hybrid-vs-reranker.md`](rag-eval/hybrid-vs-reranker.md) | **"The reranker made retrieval worse. Hybrid search shipped instead."** Every variant measured, why the untuned version shipped, and the batching bug that briefly made the results look better than they were |
+| [`rag-eval/hybrid-reference.ts`](rag-eval/hybrid-reference.ts) | The shipped hybrid ranking (BM25 + Reciprocal Rank Fusion), self-contained and type-checked in CI |
 | [`scorecard-sample.md`](scorecard-sample.md) | A representative nightly scorecard — the 1.9-to-5.0 spread that means the judge is measuring something |
 | [`writeup.md`](writeup.md) | **"I fine-tuned a model for my portfolio chatbot. My own eval told me not to ship it."** The full negative-result narrative |
 
@@ -89,6 +101,8 @@ eval layer**.
 start to finish. Then [`judge/system-prompt.md`](judge/system-prompt.md) and
 [`hard-cases/README.md`](hard-cases/README.md) for how the judge actually
 works, and [`scorecard-sample.md`](scorecard-sample.md) to see it scoring.
+For retrieval, read [`rag-eval/README.md`](rag-eval/README.md), then
+[`rag-eval/hybrid-vs-reranker.md`](rag-eval/hybrid-vs-reranker.md).
 
 ## The one-paragraph version of the write-up
 
@@ -113,7 +127,12 @@ as the documented artifact of the experiment.
 | **RAG** | Retrieval-Augmented Generation — before the model answers, a retriever pulls relevant chunks from the corpus and pastes them into the prompt as "background context." |
 | **LLM-as-judge** | Using a second language model to score the first model's output, instead of a keyword or exact-match check. |
 | **relevance / groundedness** | The judge's two axes. Relevance: does the answer address the question asked? Groundedness: is every factual claim supported by the retrieved context? |
-| **Recall@k / MRR** | Retrieval metrics from the older eval layer. Recall@k: did the right chunk land in the top *k* results? MRR: mean reciprocal rank of the first relevant chunk. See [rag-evaluation-lab](https://github.com/ramirez-ai-labs/rag-evaluation-lab). |
+| **Recall@k / MRR** | Retrieval metrics. Recall@k: did a right chunk land in the top *k* results? MRR: mean reciprocal rank of the first relevant chunk (1.0 at rank 1, 0.5 at rank 2). See [rag-evaluation-lab](https://github.com/ramirez-ai-labs/rag-evaluation-lab). |
+| **context precision / context recall** | Ragas-style retrieval metrics. Precision: are the right chunks ranked near the *top*? Recall: does the retrieved context contain every claim a correct answer needs (checked by the small judge against a reference answer)? |
+| **cosine / embedding search** | Ranking chunks by the similarity between the question's embedding vector and each chunk's. Good at meaning, weak on exact words like names and acronyms. |
+| **BM25** | The classic keyword-search scoring formula. Good at exact words, blind to meaning. |
+| **hybrid search / RRF** | Running cosine and BM25 together and merging the two rankings with Reciprocal Rank Fusion: each chunk scores 1 / (60 + its rank) in each list, summed. |
+| **cross-encoder reranker** | A model that reads the question and each candidate chunk *together* and rescores them. The textbook second retrieval stage; [here it made things worse](rag-eval/hybrid-vs-reranker.md). |
 | **SFT** | Supervised Fine-Tuning — training on `(prompt, good answer)` pairs. Can only demonstrate good answers; structurally can't teach "don't do X." |
 | **LoRA** | Low-Rank Adaptation — freeze the base model, train a small set of add-on weights (here ~16 MB). Cheap to train and to serve. |
 | **DPO** | Direct Preference Optimization — trains on `(prompt, chosen, rejected)` triples, so it *can* learn to prefer one behaviour over another. The proposed next step, not yet done. |
