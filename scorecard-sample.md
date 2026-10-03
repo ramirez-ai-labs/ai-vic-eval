@@ -12,7 +12,9 @@ measuring nothing.
 ## Judged subset — 16 of 31 cases
 
 5 retrieval softballs (a baseline that should always score well) + all 11
-`hard-*` cases.
+`hard-*` cases. (That was the suite in September. It has since grown to 34
+cases with 18 judged nightly — see [`hard-cases/`](hard-cases/README.md) for
+the two newer cases.)
 
 | Case | relevance | groundedness | what the judge saw |
 |---|---:|---:|---|
@@ -55,15 +57,15 @@ mean relevance     3.2      ← below the 3.5 blocking floor → run FAILS
 mean groundedness  3.7
 
 fine-tune-vs-rag                 rel 3  ground 1   "asked the visitor to be more specific"  ← a SOFTBALL deflected
-trustclaw                       rel 3  ground 5   "offered to discuss it, gave no project detail"  ← a SOFTBALL deflected
-hard-synthesis-devops-to-ai     rel 3  ground 1   "offered to share, drew no through-line"
+named-project                   rel 3  ground 5   "offered to discuss it, gave no project detail"  ← a SOFTBALL deflected
+hard-synthesis-background       rel 3  ground 1   "offered to share, drew no through-line"
 hard-ambiguous-platform         rel 3  ground 5   "offered to share, didn't clarify which platform"
 hard-attention-vs-hidden-state  rel 3  ground 1   "asked the visitor to ask about the subject's projects"
 hard-token-definition           rel 3  ground 1   "shifted focus to the subject's experience"
 ```
 
-The tell is the **softballs dropping into the 3s**. When `trustclaw` — a
-question with a full, grounded corpus answer — scores relevance 3 because the
+The tell is the **softballs dropping into the 3s**. When `named-project` — a
+question about one of the subject's projects, with a full, grounded corpus answer — scores relevance 3 because the
 reply deflected, something in the model or the prompt broke. The per-case
 warnings would have caught a single hard case slipping; the mean going under
 the floor is what catches a broad behavioural shift like this one.

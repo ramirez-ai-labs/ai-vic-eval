@@ -15,9 +15,10 @@ usage shows up on the same dashboard and isn't a blind spot.
 
 ## The two triggers
 
-1. **Nightly** — a fixed subset of the regression suite (currently 16 of 31
-   cases: 5 retrieval softballs + all 11 `hard-*` cases) is judged on a
-   schedule. ~16 small model calls a night.
+1. **Nightly** — a fixed subset of the regression suite (currently 18 of 34
+   cases: 5 retrieval softballs + all 13 `hard-*` cases) is judged on a
+   schedule. Up to 18 small model calls a night, fewer when the score cache
+   hits.
 2. **Live feedback** — every time a visitor rates a reply 👍/👎, that
    `(query, reply)` is judged in the background and the score is stored next
    to the human rating. This builds a labelled set: *does the machine agree

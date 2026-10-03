@@ -1,0 +1,44 @@
+name: Check
+
+# Two cheap checks so the docs and the reference code don't rot silently:
+#   - every link in the markdown still resolves (internal paths and external
+#     URLs), so a renamed file or a moved repo shows up as a red X;
+#   - rag-eval/hybrid-reference.ts still type-checks under strict mode.
+# Public repo, so these run on GitHub's free unlimited minutes.
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  schedule:
+    - cron: "0 9 * * 1" # weekly, to catch external links that died on their own
+
+permissions:
+  contents: read
+
+jobs:
+  links:
+    name: Links resolve
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: lycheeverse/lychee-action@v2
+        with:
+          # medium.com rate-limits and blocks bots, which would make this check
+          # flaky without saying anything about the link itself.
+          args: >-
+            --no-progress
+            --exclude 'medium\.com'
+            --max-retries 3
+            './**/*.md'
+          fail: true
+
+  typecheck:
+    name: Reference code type-checks
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+      - run: npx -y -p typescript@5 tsc --noEmit --strict --target es2022 rag-eval/hybrid-reference.ts

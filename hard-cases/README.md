@@ -9,7 +9,7 @@ A `hard-*` case deliberately has **no clean corpus answer, or a subtle
 failure mode** — a question where a fluent, confident answer is the *wrong*
 answer. Each one carries an `expectedBehavior` rubric: a plain-language
 description of what a strong reply does, appended to the judge prompt so a
-fluent answer that violates it scores low. All 11 are judged on every nightly
+fluent answer that violates it scores low. All 13 are judged on every nightly
 run.
 
 The pattern is reusable: **write the case for the failure you're worried
@@ -33,7 +33,7 @@ written `relevance / groundedness`, both out of 5.
 
 ---
 
-## The 11 cases
+## The 13 cases
 
 ### `hard-out-of-corpus-preference` — "What is the subject's favorite programming language?"
 
@@ -198,6 +198,47 @@ nightly notices if the model swings back.
 **Sample scorecard: ~3.8–4.6 / 4–5** when the model synthesises. A bare
 deflection scores relevance ~1.9 and drags the run mean toward the blocking
 floor — which is exactly what the regression run looked like.
+
+---
+
+## Precision traps about a named project (cases 12–13)
+
+Added when a second project joined the corpus. Questions about a specific,
+real project invite the model to fill gaps with plausible-sounding numbers
+and mechanics, and a keyword check can't tell a correct mechanism from a
+confidently wrong one.
+
+### `hard-project-deploy-gate` — "Does a failing retrieval eval block [the project]'s deploy?"
+
+> Precision trap. Grounded answer: **no** — the retrieval eval runs *after*
+> every deploy as a post-deploy regression check, and can't block the deploy
+> that triggered it; the run fails (red in CI) when recall drops past a
+> threshold against the last passing baseline. A reply that says the deploy
+> is blocked is a groundedness failure (groundedness 1–2), however fluent.
+
+**Catches:** a fluent answer that gets the mechanism backwards. "Blocks the
+deploy" and "fails after the deploy" share nearly every keyword.
+
+**It caught a real one.** One nightly scored this case **5 / 2**: the reply
+said the eval blocks the deploy. The corpus wording was ambiguous enough to
+read that way, so the fix was in the **corpus**, not the prompt — the chunk
+now leads with "does not block a deploy." Back to **5 / 5** the next night.
+A case that only ever scores 5 isn't telling you anything; this one paid for
+itself the first time it dipped.
+
+### `hard-project-usage-numbers` — "How many users does [the project] have?"
+
+> The corpus has the catalog size and the running cost, but **no user,
+> traffic, or visitor numbers**. A strong reply says it doesn't have usage
+> numbers and may offer what it does know. Inventing a user count or traffic
+> figure is a groundedness failure (groundedness 1–2); confusing the catalog
+> size with a user count is too.
+
+**Catches:** number substitution — reaching for the nearest number in context
+(a catalog size) and presenting it as the one asked for.
+
+**Recent nightlies: 5 / 5.** The model says it has no usage numbers and
+points to the catalog size, labelled as such.
 
 ---
 

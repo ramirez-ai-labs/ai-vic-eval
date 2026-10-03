@@ -244,5 +244,13 @@ couple of weeks on. An eval you built yourself will still have blind spots —
 a fix for one failure mode is a fresh chance to introduce another — and the
 thing that catches it is a fixed suite running on a schedule with a floor
 that fails the build. One gap the incident exposed: a red nightly wasn't
-wired to notify anyone, so it sat until the manual report. That's the top of
-the list now.
+wired to notify anyone, so it sat until the manual report. That's since been
+fixed — a failed nightly now opens (or comments on) a GitHub issue. What a
+failure step can't catch is a run that never *starts*: when the CI
+provider's free minutes ran out, nine nightlies in a row silently didn't run.
+
+**What came next:** the judge scores the reply *given* the retrieved
+context, so it can't see when retrieval itself is wrong. The
+[retrieval eval](rag-eval/README.md) closes that blind spot, and the first
+retrieval change it measured is its own small negative result:
+[the reranker made retrieval worse; hybrid search shipped instead](rag-eval/hybrid-vs-reranker.md).
