@@ -15,7 +15,7 @@ usage shows up on the same dashboard and isn't a blind spot.
 
 ## The two triggers
 
-1. **Nightly** — a fixed subset of the regression suite (currently 18 of 34
+1. **Nightly** — a fixed subset of the regression suite (currently 18 of 37
    cases: 5 retrieval softballs + all 13 `hard-*` cases) is judged on a
    schedule. Up to 18 small model calls a night, fewer when the score cache
    hits.
