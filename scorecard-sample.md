@@ -12,7 +12,7 @@ measuring nothing.
 ## Judged subset — 16 of 31 cases
 
 5 retrieval softballs (a baseline that should always score well) + all 11
-`hard-*` cases. (That was the suite in September. It has since grown to 34
+`hard-*` cases. (That was the suite in September. It has since grown to 37
 cases with 18 judged nightly — see [`hard-cases/`](hard-cases/README.md) for
 the two newer cases.)
 
